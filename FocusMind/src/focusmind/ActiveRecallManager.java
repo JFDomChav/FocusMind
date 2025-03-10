@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ActiveRecallManager extends Thread{
+public class ActiveRecallManager extends Thread{ // TESTED ☑
     private StudyTasksList list = new StudyTasksList();
     private ArrayList<Integer> TasksReadyToStudy = new ArrayList<>();
     private final int MAX_ITERATIONS;
@@ -34,11 +34,16 @@ public class ActiveRecallManager extends Thread{
         return ret;
     }
     
+    public int addTask(){
+        int ret = this.list.add();
+
+        return ret;
+    }
     /* return status code:
         0 = time renewed, nothing more.
         1 = the task reach the max iterations and was removed
         -1= the list of tasks is empty
-        -2= the task was not found
+        -2= the task was not found 
     */
     public int taskAlreadyStudied(int taskId){
         this.notifyAll();
@@ -53,20 +58,11 @@ public class ActiveRecallManager extends Thread{
     @Override
     public void run(){
         while(true){
-            if(this.list.check(this.TasksReadyToStudy)){
-                this.notifyAll();
+            if(list.check(TasksReadyToStudy)){
+                synchronized(this){
+                    this.notifyAll();
+                }
             }
-            /*
-            Siguiente:
-                -Estudiar con active recall
-                -Calendario que muestre cuando y qué debo estudiar
-            El programa checa cada segundo si hay alguna tarea nueva que se deba estudiar
-            y si la hay entonces la agrega al arraylist y notifica a todos
-            los hilos que esperan su respuesta.
-            El programa puede poner mas tiempo cuando la tarea ya fue estudiada
-            y eliminarla cuando alcanza el maximo de iteraciones.
-            Falta probar
-            */
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException ex) {
@@ -115,7 +111,7 @@ public class ActiveRecallManager extends Thread{
         }
     }
     private class StudyTasksNode{
-        private int idTask;
+        private final int idTask;
         private LocalTime finishTimeTask;
         private StudyTasksNode nextNode = null;
         private boolean timeFinish = false;
@@ -136,7 +132,7 @@ public class ActiveRecallManager extends Thread{
         
         public boolean check(ArrayList<Integer> list, boolean status){
             if(!this.timeFinish){
-                if(this.finishTimeTask.equals(LocalTime.now())){
+                if(this.finishTimeTask.compareTo(LocalTime.now()) < 0){
                     list.add(this.idTask);
                     this.timeFinish = true;
                     status = true;
