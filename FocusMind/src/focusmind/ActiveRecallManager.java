@@ -8,6 +8,16 @@ import java.util.logging.Logger;
 public class ActiveRecallManager extends Thread{
     private StudyTasksList list = new StudyTasksList();
     private ArrayList<Integer> TasksReadyToStudy = new ArrayList<>();
+    private final int MAX_ITERATIONS;
+    
+    public ActiveRecallManager(int max_iterations){
+        this.MAX_ITERATIONS = max_iterations;
+    }
+    
+    private int getMaxIterations(){
+        int max = this.MAX_ITERATIONS;
+        return max;
+    }
     
     // Basic potencial math model. 30 *2^i seconds.
     private static long calcSeconds(int iteration){
@@ -24,6 +34,22 @@ public class ActiveRecallManager extends Thread{
         return ret;
     }
     
+    /* return status code:
+        0 = time renewed, nothing more.
+        1 = the task reach the max iterations and was removed
+        -1= the list of tasks is empty
+        -2= the task was not found
+    */
+    public int taskAlreadyStudied(int taskId){
+        this.notifyAll();
+        this.TasksReadyToStudy.remove(taskId);
+        int ret = this.list.taskRenewCooldownTimeOf(taskId);
+        if(ret == 1){
+            this.list.remove(taskId);
+        }
+        return ret;
+    }
+    
     @Override
     public void run(){
         while(true){
@@ -37,9 +63,9 @@ public class ActiveRecallManager extends Thread{
             El programa checa cada segundo si hay alguna tarea nueva que se deba estudiar
             y si la hay entonces la agrega al arraylist y notifica a todos
             los hilos que esperan su respuesta.
-            Falta probar y programar la eliminacion de una tarea y su 
-            actualizacion de tiempo cuando el usuario haya terminado de 
-            estudiarla
+            El programa puede poner mas tiempo cuando la tarea ya fue estudiada
+            y eliminarla cuando alcanza el maximo de iteraciones.
+            Falta probar
             */
             try {
                 Thread.sleep(1000);
@@ -64,11 +90,28 @@ public class ActiveRecallManager extends Thread{
             this.ActualFreeId++;
             return (this.ActualFreeId-1);
         }
+        
+        public void remove(int taskId){
+            if(this.firstNode != null){
+                if(this.firstNode.getId() == taskId){
+                    this.firstNode = this.firstNode.getNext();
+                }else{
+                    this.firstNode.removeTaskById(taskId);
+                }
+            }
+        }
+        
         public boolean check(ArrayList<Integer> list){
             if(this.firstNode != null){
                 return this.firstNode.check(list, false);
             }
             return false;
+        }
+        public int taskRenewCooldownTimeOf(int taskId){
+            if(this.firstNode != null){
+                return this.firstNode.renewCooldownTimeOf(taskId);
+            }
+            return -1;
         }
     }
     private class StudyTasksNode{
@@ -76,6 +119,7 @@ public class ActiveRecallManager extends Thread{
         private LocalTime finishTimeTask;
         private StudyTasksNode nextNode = null;
         private boolean timeFinish = false;
+        private int actualIteration = 0;
         
         public StudyTasksNode(int idTask, LocalTime finishTimeTask){
             this.idTask = idTask;
@@ -108,6 +152,40 @@ public class ActiveRecallManager extends Thread{
         public boolean isTimeToStudyIt(){
             boolean ret = this.timeFinish;
             return ret;
+        }
+        
+        public StudyTasksNode getNext(){
+            return this.nextNode;
+        }
+        
+        public void removeTaskById(int taskId){
+            if(this.nextNode != null){
+                if(this.nextNode.getId() == taskId){
+                    this.nextNode = this.nextNode.nextNode;
+                }else{
+                    this.nextNode.removeTaskById(taskId);
+                }
+            }
+        }
+        
+        public int getId(){
+            int ret = this.idTask;
+            return ret;
+        }
+        
+        public int renewCooldownTimeOf(int taskId){
+            if(this.idTask == taskId){
+                this.timeFinish = false;
+                if(this.actualIteration < getMaxIterations()){
+                    this.actualIteration++;
+                    this.finishTimeTask = ActiveRecallManager.calcTime(this.actualIteration);
+                    return 0;
+                }
+                return 1;
+            }else if(this.nextNode != null){
+                return this.nextNode.renewCooldownTimeOf(taskId);
+            }
+            return -2;
         }
     }
 }
