@@ -2,7 +2,10 @@ package focusmind;
 
 import java.awt.Dimension;
 import java.awt.Image;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -11,7 +14,7 @@ import javax.swing.JScrollPane;
 
 public class TasksView extends javax.swing.JFrame {
     private ActiveRecallManager ARM;
-    private final int MAX_STUDY_ITERATIONS = 5;
+    private final int MAX_STUDY_ITERATIONS = 1;
     private TasksList list;
     /**
      * Creates new form TasksView
@@ -21,7 +24,7 @@ public class TasksView extends javax.swing.JFrame {
         this.list = new TasksList();
         this.ARM = new ActiveRecallManager(this.MAX_STUDY_ITERATIONS);
         this.ARM.start();
-        System.out.println("X="+ScrollPanePanel.getSize().width+", Y="+ScrollPanePanel.getSize().height);
+        waitARM().start();
     }
 
     /**
@@ -107,6 +110,32 @@ public class TasksView extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
+    
+    private Thread waitARM(){
+        Thread waitarm = new Thread(){
+            @Override
+            public void run(){
+                ArrayList<Integer> taskReady;
+                try {
+                    while(true){
+                        synchronized(ARM){
+                            ARM.wait();
+                            taskReady = ARM.getTaksReadyToStudy();
+                            for(int id : taskReady){
+                                list.setReadyToStudy(id);
+                            }
+                            ScrollPanePanel.revalidate();
+                        }
+                    }
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(TasksView.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+            }
+        };
+        return waitarm;
+    }
+    
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -151,34 +180,43 @@ public class TasksView extends javax.swing.JFrame {
         private HashMap<Integer, Task> TasksFunction = new HashMap<>();
         
         public void createTask(String taskName){
-            Task task = new Task();
+            int idTask = ARM.addTask();
+            Task task = new Task(idTask);
             JPanel taskPanel = task.createTask(taskName);
             configurateScrollPanePanel(taskPanel.getPreferredSize().height);
-            int idTask = ARM.addTask();
             ScrollPanePanel.add(taskPanel);
             TasksFunction.put(idTask, task);
-            System.out.println();
         }
         public void configurateScrollPanePanel(int panelHeight){
             if(ScrollPanePanel.getPreferredSize().height < (panelHeight*(this.TasksFunction.size()+1))){
                 ScrollPanePanel.setPreferredSize( new Dimension(ScrollPanePanel.getSize().width, (panelHeight*(this.TasksFunction.size()+1))));
             }
             ScrollPanePanel.revalidate();
-            
+        }
+        public void setReadyToStudy(int id){
+           this.TasksFunction.get(id).setReadyToStudy();
+        }
+        public void deleteTask(int id){
+            this.TasksFunction.remove(id);
         }
     }
     
     private class Task{
+        private final int taskId;
+        private final int ICON_SIZE = 37;
         private JPanel TaskPanel;
         private JLabel LabelTask;
         private JLabel iconStatusTask;
         private JButton ButtonDelete;
         private JButton ButtonRenewTime;
         
+        public Task(int id){
+            this.taskId = id;
+        }
+        
         public JPanel createTask(String taskName){
             // Create the task panel
             this.TaskPanel = new JPanel();
-            
             this.LabelTask = new JLabel(taskName);
             this.iconStatusTask = new JLabel("");
 
@@ -190,20 +228,17 @@ public class TasksView extends javax.swing.JFrame {
             });
 
             this.ButtonRenewTime = new JButton("Reiniciar tiempo");
+            this.ButtonRenewTime.setEnabled(false);
             this.ButtonRenewTime.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
                     ButtonRenewTimeActionPerformed(evt);
                 }
             });
-
-            int iconSize = 37;
-            this.iconStatusTask.setMaximumSize(new java.awt.Dimension(iconSize, iconSize));            
-            this.iconStatusTask.setPreferredSize(new java.awt.Dimension(iconSize, iconSize));
-            String actualRoute = System.getProperty("user.dir");
-            ImageIcon preIcon = new ImageIcon(actualRoute+"/resources/waiting.png");
-            Image icon = preIcon.getImage().getScaledInstance(iconSize, iconSize, Image.SCALE_SMOOTH);
-            this.iconStatusTask.setIcon(new ImageIcon(icon));
-
+            
+            this.iconStatusTask.setMaximumSize(new java.awt.Dimension(ICON_SIZE, ICON_SIZE));            
+            this.iconStatusTask.setPreferredSize(new java.awt.Dimension(ICON_SIZE, ICON_SIZE));
+            setIcon(false);
+            
             javax.swing.GroupLayout TaskPanelLayout = new javax.swing.GroupLayout(this.TaskPanel);
             this.TaskPanel.setLayout(TaskPanelLayout);
             TaskPanelLayout.setHorizontalGroup(
@@ -234,12 +269,48 @@ public class TasksView extends javax.swing.JFrame {
             return this.TaskPanel;
         }
         
+        private void setIcon(boolean readyToStudy){
+            
+            String actualRoute = System.getProperty("user.dir");
+            ImageIcon preIcon;
+            if(readyToStudy){
+                preIcon = new ImageIcon(actualRoute+"/resources/ready.png");
+            }else{
+                preIcon = new ImageIcon(actualRoute+"/resources/waiting.png");
+            }
+            Image icon = preIcon.getImage().getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
+            this.iconStatusTask.setIcon(new ImageIcon(icon));
+        }
+        
+        public void setReadyToStudy(){
+            this.ButtonRenewTime.setEnabled(true);
+            setIcon(true);
+        }
+        
+        public void setStudied(){
+            this.ButtonRenewTime.setEnabled(false);
+            setIcon(false);
+        }
+        
+        private void removeTask(){
+            list.deleteTask(this.taskId);
+            ARM.removeTask(this.taskId);
+            ScrollPanePanel.remove(this.TaskPanel);
+            ScrollPanePanel.revalidate();
+            ScrollPanePanel.repaint();
+        }
+        
         private void ButtonDeleteActionPerformed(java.awt.event.ActionEvent evt) {                                             
-            // TODO add your handling code here:
-        }    
+            removeTask();
+        }
         
         private void ButtonRenewTimeActionPerformed(java.awt.event.ActionEvent evt) {                                             
-            // TODO add your handling code here:
+            if(ARM.taskAlreadyStudied(this.taskId) == 1){
+                removeTask();
+            }else{
+                setStudied();
+                ScrollPanePanel.revalidate();
+            }
         }
     }
 }

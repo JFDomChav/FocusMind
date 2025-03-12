@@ -46,13 +46,16 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
         -2= the task was not found 
     */
     public int taskAlreadyStudied(int taskId){
-        this.notifyAll();
         this.TasksReadyToStudy.remove(taskId);
         int ret = this.list.taskRenewCooldownTimeOf(taskId);
         if(ret == 1){
             this.list.remove(taskId);
         }
         return ret;
+    }
+    
+    public void removeTask(int id){
+        this.list.remove(id);
     }
     
     @Override
