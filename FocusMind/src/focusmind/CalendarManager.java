@@ -33,12 +33,12 @@ public class CalendarManager {
         accessToFile();
     }
     
-    private long calcDayTime(int iteration){
+    private long calcDayTime(int iteration){ // Tested ☑
         long ret = (long) Math.pow(2, iteration);
         return ret;
     }
     // Return the backwardness in days
-    public int calcBackwardnessOf(String idTaskCM){
+    public int calcBackwardnessOf(String idTaskCM){ // Tested ☑
         FileInputStream calendarFIS;
         try {
             calendarFIS = new FileInputStream(this.calendarFile);
@@ -67,23 +67,24 @@ public class CalendarManager {
     /*
         When the iterator is -1 that means the task reach the max of iterations
     */
-    public void updateTask(String idTaskCM){
+    public void updateTask(String idTaskCM){ // Tested ☑
         try{
             FileInputStream calendarFIS = new FileInputStream(this.calendarFile);
             int startIn = getPositionOf(idTaskCM, calendarFIS)+1;// index in date position
-            calendarFIS.skip(1); // Skip to date position
-            LocalDate newDate = fileDateToLocalDate(calendarFIS);
-            calendarFIS.skip(11); // Skip to iteration position
-            int iteration = Integer.parseInt(Byte.toString((byte)calendarFIS.read()))+1;
-            if(iteration<(this.MAX_ITERATIONS+1)){
-                newDate = newDate.plusDays(iteration);
-                changeDateIn(startIn, dateToString(newDate, true));
-                startIn+=11;
-                changeIterationIn(startIn, iteration);
-            }else{
-                startIn+=11;
-                changeIterationIn(startIn, this.NULL_ITERATION);
-            }
+            if(startIn>0){
+                calendarFIS.skip(1); // Skip to date position
+                LocalDate newDate = fileDateToLocalDate(calendarFIS);
+                int iteration = Integer.parseInt(Character.toString(calendarFIS.read()))+1;
+                if(iteration<(this.MAX_ITERATIONS+1)){
+                    newDate = newDate.plusDays(calcDayTime(iteration));
+                    changeDateIn(startIn, dateToString(newDate, false));
+                    startIn+=11;
+                    changeIterationIn(startIn, iteration);
+                }else{
+                    startIn+=11;
+                    changeIterationIn(startIn, this.NULL_ITERATION);
+                }
+                }
             calendarFIS.close();
         }
         // File exception
@@ -96,42 +97,43 @@ public class CalendarManager {
         }
     }
     
+    private static String byteArrayToString(byte[] array){ // Tested ☑
+        String ret = "";
+        for(int i = 0; i<array.length; i++){
+            char character = (char) array[i];
+            ret += character;
+        }
+        return ret;
+    }
+    
     /*  Input FIS: IIIIIIIIII:DD_MM_YYYY;C;name+
                               ▲
         Output FIS: IIIIIIIIII:DD_MM_YYYY;C;name+
                                           ▲
     */
-    private LocalDate fileDateToLocalDate(FileInputStream calendarFIS) throws IOException{
-        int day = Integer.parseInt(
-                    Byte.toString((byte)calendarFIS.read())
-                    +Byte.toString((byte)calendarFIS.read())
-            );
-            calendarFIS.skip(1);
-            int month = Integer.parseInt(
-                    Byte.toString((byte)calendarFIS.read())
-                    +Byte.toString((byte)calendarFIS.read())
-            );
-            calendarFIS.skip(1);
-            int year = Integer.parseInt(
-                    Byte.toString((byte)calendarFIS.read())
-                    +Byte.toString((byte)calendarFIS.read())
-                    +Byte.toString((byte)calendarFIS.read())
-                    +Byte.toString((byte)calendarFIS.read())
-            );
-            calendarFIS.skip(1);
-            LocalDate newDate = LocalDate.of(year, month, day);
-            return newDate;
+    private LocalDate fileDateToLocalDate(FileInputStream calendarFIS) throws IOException{ // Tested ☑
+        String numFinal = byteArrayToString(calendarFIS.readNBytes(2));
+        int day = Integer.parseInt(numFinal);
+        calendarFIS.skip(1);
+        numFinal = byteArrayToString(calendarFIS.readNBytes(2));
+        int month = Integer.parseInt(numFinal);
+        calendarFIS.skip(1);
+        numFinal = byteArrayToString(calendarFIS.readNBytes(4));
+        int year = Integer.parseInt(numFinal);
+        calendarFIS.skip(1);
+        LocalDate newDate = LocalDate.of(year, month, day);
+        return newDate;
     }
     /*
         Output: IIIIIIIIII:DD_MM_YYYY;C;name+
                           ▲ (index)
     */
-    private int getPositionOf(String idTaskCM, FileInputStream calendarFIS) throws IOException{
+    private int getPositionOf(String idTaskCM, FileInputStream calendarFIS) throws IOException{ // Tested ☑
         int startIn = 0;
         while(startIn < calendarFile.length()){
             // compare the ID
-            byte[] id = calendarFIS.readNBytes(11);
-            startIn+=11;
+            byte[] id = calendarFIS.readNBytes(10);
+            startIn+=10;
             if(Arrays.equals(id, idTaskCM.getBytes())){
                 return startIn;
             }
@@ -139,14 +141,15 @@ public class CalendarManager {
             else{
                 /*
                     IIIIIIIIII:DD_MM_YYYY;C;name+
-                    |        |             |
-                    read (11) save jump (14)
+                    |        |              |
+                    read (10) save jump (14)
                 */
                 calendarFIS.skipNBytes(14);
-                startIn+=12;
+                startIn+=14;
                 while(calendarFIS.read() != 47){
                     startIn++;
                 }
+                startIn++;
             }
 
         }
@@ -157,14 +160,22 @@ public class CalendarManager {
                                      ▲ (index)
         Result: IIIIIIIIII:DD_MM_YYYY;K;name+
     */
-    private void changeIterationIn(int index, int newIteration) throws IOException{
-        FileOutputStream calendarFOS = new FileOutputStream(this.calendarFile);
+    private void changeIterationIn(int index, int newIteration) throws IOException{ // Tested ☑
+        // Save 0 to index and index+2 to final info
+        FileInputStream calendarFIS = new FileInputStream(this.calendarFile);
+        byte[] first = calendarFIS.readNBytes(index);
+        calendarFIS.skip(1); // length of iteration number
+        byte[] last = calendarFIS.readAllBytes();
+        // Create a new file
+        FileOutputStream calendarFOS = new FileOutputStream(this.calendarFile, false);
         String it = ""+newIteration;
-        calendarFOS.write(it.getBytes(), index, it.getBytes().length);
+        calendarFOS.write(first);
+        calendarFOS.write(it.getBytes());
+        calendarFOS.write(last);
         calendarFOS.close();
     }
     
-    private String dateToString(LocalDate date, boolean unspaced){
+    private String dateToString(LocalDate date, boolean unspaced){ // Tested ☑
         // day to DD
         int day = date.getDayOfMonth();
         String dayString = "";
@@ -190,34 +201,41 @@ public class CalendarManager {
         return ret;
     }
     
-    private void changeDateIn(int index, String newDate) throws FileNotFoundException, IOException{
-        FileOutputStream calendarFOS = new FileOutputStream(this.calendarFile);
+    private void changeDateIn(int index, String newDate) throws FileNotFoundException, IOException{ // Tested ☑
+        // Save 0 to index and index+11 to final info
+        FileInputStream calendarFIS = new FileInputStream(this.calendarFile);
+        byte[] first = calendarFIS.readNBytes(index);
+        calendarFIS.skip(10); // length of date
+        byte[] last = calendarFIS.readAllBytes();
+        // Create a new file
+        FileOutputStream calendarFOS = new FileOutputStream(this.calendarFile, false);
         // DATE: DD_MM_YYYY = 10
-        calendarFOS.write(newDate.getBytes(), index, 10);
+        calendarFOS.write(first);
+        calendarFOS.write(newDate.getBytes());
+        calendarFOS.write(last);
         calendarFOS.close();
     }
     
-    private String createID(String nameTask){
-        String id = nameTask.substring(0, 2)+dateToString(LocalDate.now(), false);
+    private String createID(String nameTask){ // Tested ☑
+        String id = nameTask.substring(0, 2)+dateToString(LocalDate.now(), true);
         return id;
     }
     
-    public boolean putTask(String nameTask){
-        boolean status = false;
+    public String putTask(String nameTask){ // Tested ☑
+        String id = null;
         if(this.calendarFile.canWrite()){
-            try {
-                FileOutputStream calendarFOS = new FileOutputStream(this.calendarFile);
-                String id = createID(nameTask);
-                
+            try(FileOutputStream calendarFOS = new FileOutputStream(this.calendarFile, true)) {
+                id = createID(nameTask);
                 String info = id+":"
                         // Date DD_MM_YYYY
-                        +dateToString(LocalDate.now(), true)
+                        +dateToString(LocalDate.now(), false)
                         // Iteration number
-                        +";"+"0"
+                        +";"+"0"+";"
                         // task name
                         +nameTask+"/"
                 ;
                 calendarFOS.write(info.getBytes());
+                calendarFOS.close();
             }
             // Manage file exceptions
             catch (FileNotFoundException ex) {
@@ -228,7 +246,7 @@ public class CalendarManager {
                 Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        return status;
+        return id;
     }
     private void accessToFile(){
         if(!calendarFile.exists()){
@@ -236,7 +254,7 @@ public class CalendarManager {
         }
     }
     
-    private boolean createFile(){
+    private boolean createFile(){ // Tested ☑
         try {
             return calendarFile.createNewFile();
         } catch (IOException ex) {
@@ -245,7 +263,7 @@ public class CalendarManager {
         }
     }
     // Delete tasks that have already expired
-    public void clearFile(){
+    public void clearFile(){ // Tested ☑
         class TaskInfo{
             String id;
             String date;
@@ -262,13 +280,6 @@ public class CalendarManager {
                 String ret = id+":"+date+";"+iteration+";"+name+"/";
                 return ret;
             }
-            public static String byteArrayToString(byte[] array){
-                String ret = "";
-                for(int i = 0; i<array.length; i++){
-                    ret += Byte.toString(array[i]);
-                }
-                return ret;
-            }
         }
         ArrayList<TaskInfo> tasks = new ArrayList<>();
         try {
@@ -281,26 +292,43 @@ public class CalendarManager {
             // fill the arraylist with the non-expired task
             while(index < calendarFile.length()){
                 // Read the ID
-                actualTaskInfo.id = TaskInfo.byteArrayToString(FIS.readNBytes(10));
+                actualTaskInfo.id = byteArrayToString(FIS.readNBytes(10));
+                index+=10;
                 FIS.skip(1);
+                index++;
                 // Read the date
-                actualTaskInfo.date = TaskInfo.byteArrayToString(FIS.readNBytes(10));
+                actualTaskInfo.date = byteArrayToString(FIS.readNBytes(10));
+                index+=10;
                 FIS.skip(1);
+                index++;
                 // Read the iteration
-                actualTaskInfo.iteration = TaskInfo.byteArrayToString(FIS.readNBytes(1));
+                actualTaskInfo.iteration = byteArrayToString(FIS.readNBytes(1));
+                index++;
                 if(Integer.parseInt(actualTaskInfo.iteration) < NULL_ITERATION){
                     FIS.skip(1);
+                    index++;
                     char character =(char) FIS.read();
+                    index++;
                     String name = "";
                     // Read the name
                     while(character != 47){
                         name+=character;
                         character =(char) FIS.read();
+                        index++;
                     }
                     actualTaskInfo.name = name;
                     TaskInfo add = new TaskInfo(actualTaskInfo);
                     tasks.add(add);
                     actualTaskInfo = new TaskInfo();
+                }else{
+                    FIS.skip(1);
+                    index++;
+                    char character =(char) FIS.read();
+                    index++;
+                    while(character != 47){
+                        character =(char) FIS.read();
+                        index++;
+                    }
                 }
             }
             FIS.close();
