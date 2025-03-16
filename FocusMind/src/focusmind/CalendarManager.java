@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,17 +17,6 @@ public class CalendarManager {
     private final File calendarFile;
     private final int MAX_ITERATIONS = 7;
     private final int NULL_ITERATION = 9;
-    /*
-        Esta clase debe guardar en un fichero el tema a estudiar, la fecha, si
-        esta retrasado y si es asi por cuantos dias.
-        Esta clase se conectara directamente con ActiveRecallManager cuando
-        una tarea termine su maximo de iteraciones se guardara en el fichero.
-    
-        La clase ya guarda en el fichero el tema, su id, la fecha para volver
-        a estudiar y la iteracion actual. Ademas puede actualizar estos datos.
-    
-        Falta probar.
-    */
     public CalendarManager(){
         String actualRoute = System.getProperty("user.dir");
         this.calendarFile = new File(actualRoute+"/"+CALENDAR_FILE_NAME);
@@ -348,5 +338,73 @@ public class CalendarManager {
         catch (IOException ex) {
             Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    public void deleteTask(String taskIdCM){ // Tested ☑
+        try(
+            FileInputStream calendarFIS = new FileInputStream(this.calendarFile);
+        ) {
+            int taskPos = this.getPositionOf(taskIdCM, calendarFIS)+12;
+            this.changeIterationIn(taskPos, this.NULL_ITERATION);
+            this.clearFile();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
+    public HashMap<String, String> getAllTasksInDate(LocalDate date){ // Tested ☑
+        HashMap<String,String> tasks = new HashMap<>();
+        FileInputStream FIS;
+        try {
+            FIS = new FileInputStream(this.calendarFile);
+            int index = 0;
+            /*
+                IIIIIIIIII:DD_MM_YYYY;C;name+/
+            */
+            // fill the arraylist with the non-expired task
+            while(index < calendarFile.length()){
+                // Read the ID
+                String readId = byteArrayToString(FIS.readNBytes(10));
+                index+=11;
+                FIS.skip(1);
+                // Read the date
+                LocalDate readDate = this.fileDateToLocalDate(FIS);
+                index+=11;
+                // Read the iteration
+                int iteration = Integer.parseInt(byteArrayToString(FIS.readNBytes(1)));
+                FIS.skip(1);
+                index+=2;
+                if((iteration!=this.NULL_ITERATION) && (readDate.equals(date))){
+                    char character =(char) FIS.read();
+                    index++;
+                    String name = "";
+                    // Read the name
+                    while(character != 47){
+                        name+=character;
+                        character =(char) FIS.read();
+                        index++;
+                    }
+                    tasks.put(new String(readId), new String(name));
+                }else{
+                    char character =(char) FIS.read();
+                    index++;
+                    while(character != 47){
+                        character =(char) FIS.read();
+                        index++;
+                    }
+                }
+            }
+            FIS.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return tasks;
+    }
+    
+    public HashMap<String, String> getAllTasksToday(){ // Tested ☑
+        return this.getAllTasksInDate(LocalDate.now());
     }
 }
