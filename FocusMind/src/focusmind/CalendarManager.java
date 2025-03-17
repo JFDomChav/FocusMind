@@ -27,6 +27,12 @@ public class CalendarManager {
         long ret = (long) Math.pow(2, iteration);
         return ret;
     }
+    private int caclBackwardness(LocalDate date){
+        int days = LocalDate.now().getDayOfYear()-date.getDayOfYear();
+        int yearsDiff = LocalDate.now().getYear()-date.getYear();
+        int ret = days + (365*yearsDiff);
+        return ret;
+    }
     // Return the backwardness in days
     public int calcBackwardnessOf(String idTaskCM){ // Tested ☑
         FileInputStream calendarFIS;
@@ -36,11 +42,8 @@ public class CalendarManager {
             calendarFIS.skip(1); // Skip to date position
             LocalDate date = fileDateToLocalDate(calendarFIS);
             if( !(date.equals(LocalDate.now())) && (date.compareTo(LocalDate.now()) < 0)){
-                int days = LocalDate.now().getDayOfYear()-date.getDayOfYear();
-                int yearsDiff = LocalDate.now().getYear()-date.getYear();
-                int ret = days + (365*yearsDiff);
                 calendarFIS.close();
-                return ret;
+                return caclBackwardness(date);
             }
             calendarFIS.close();
         } 
@@ -404,7 +407,127 @@ public class CalendarManager {
         return tasks;
     }
     
+    
+    public HashMap<String,String> getAllPendingTasks(){
+        HashMap<String,String> tasks = new HashMap<>();
+        FileInputStream FIS;
+        try {
+            FIS = new FileInputStream(this.calendarFile);
+            int index = 0;
+            /*
+                IIIIIIIIII:DD_MM_YYYY;C;name+/
+            */
+            // fill the arraylist with the non-expired pending task
+            while(index < calendarFile.length()){
+                // Read the ID
+                String readId = byteArrayToString(FIS.readNBytes(10));
+                index+=11;
+                FIS.skip(1);
+                // Read the date
+                LocalDate readDate = this.fileDateToLocalDate(FIS);
+                index+=11;
+                // Read the iteration
+                int iteration = Integer.parseInt(byteArrayToString(FIS.readNBytes(1)));
+                FIS.skip(1);
+                index+=2;
+                if((iteration!=this.NULL_ITERATION) && (caclBackwardness(readDate) > 0)){
+                    char character =(char) FIS.read();
+                    index++;
+                    String name = "";
+                    // Read the name
+                    while(character != 47){
+                        name+=character;
+                        character =(char) FIS.read();
+                        index++;
+                    }
+                    tasks.put(new String(readId), new String(name));
+                }else{
+                    char character =(char) FIS.read();
+                    index++;
+                    while(character != 47){
+                        character =(char) FIS.read();
+                        index++;
+                    }
+                }
+            }
+            FIS.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return tasks;
+    }
+    
     public HashMap<String, String> getAllTasksToday(){ // Tested ☑
         return this.getAllTasksInDate(LocalDate.now());
+    }
+    
+    public String getDateOf(String idTask){
+        FileInputStream calendarFIS;
+        try {
+            calendarFIS = new FileInputStream(this.calendarFile);
+            this.getPositionOf(idTask, calendarFIS);
+            calendarFIS.skip(1);
+            String date = this.dateToString(this.fileDateToLocalDate(calendarFIS), false);
+            date = date.replace('_', '/');
+            return date;
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+    
+    public HashMap<String,String> getAllTasks(){
+        HashMap<String,String> tasks = new HashMap<>();
+        FileInputStream FIS;
+        try {
+            FIS = new FileInputStream(this.calendarFile);
+            int index = 0;
+            /*
+                IIIIIIIIII:DD_MM_YYYY;C;name+/
+            */
+            // fill the arraylist with all the non-expired tasks
+            while(index < calendarFile.length()){
+                // Read the ID
+                String readId = byteArrayToString(FIS.readNBytes(10));
+                index+=11;
+                FIS.skip(1);
+                // Read the date
+                LocalDate readDate = this.fileDateToLocalDate(FIS);
+                index+=11;
+                // Read the iteration
+                int iteration = Integer.parseInt(byteArrayToString(FIS.readNBytes(1)));
+                FIS.skip(1);
+                index+=2;
+                if((iteration!=this.NULL_ITERATION)){
+                    char character =(char) FIS.read();
+                    index++;
+                    String name = "";
+                    // Read the name
+                    while(character != 47){
+                        name+=character;
+                        character =(char) FIS.read();
+                        index++;
+                    }
+                    tasks.put(new String(readId), new String(name));
+                }else{
+                    char character =(char) FIS.read();
+                    index++;
+                    while(character != 47){
+                        character =(char) FIS.read();
+                        index++;
+                    }
+                }
+            }
+            FIS.close();
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(CalendarManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return tasks;
     }
 }
