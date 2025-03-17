@@ -8,7 +8,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class CalendarView extends javax.swing.JFrame {
-
+    /*
+        0: Today
+        1: All
+        -1: Pending
+    */
+    private int mode;
     /**
      * Creates new form calendarView
      */
@@ -26,48 +31,124 @@ public class CalendarView extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
+        LabelTitle = new javax.swing.JLabel();
         ScrollPane = new javax.swing.JScrollPane();
         ScrollPanePanel = new javax.swing.JPanel();
+        ButtonTasksToday = new javax.swing.JButton();
+        ButtonAllTasks = new javax.swing.JButton();
+        ButtonPendingTasks = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel1.setText("Pendientes:");
+        LabelTitle.setText("Pendientes:");
 
         ScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         ScrollPane.setAlignmentX(0.0F);
         ScrollPane.setAlignmentY(0.0F);
 
-        ScrollPanePanel.setAlignmentX(0.5F);
         ScrollPanePanel.setLayout(new javax.swing.BoxLayout(ScrollPanePanel, javax.swing.BoxLayout.Y_AXIS));
         ScrollPane.setViewportView(ScrollPanePanel);
+
+        ButtonTasksToday.setText("Ver tareas para hoy");
+        ButtonTasksToday.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonTasksTodayActionPerformed(evt);
+            }
+        });
+
+        ButtonAllTasks.setText("Ver todas las tareas");
+        ButtonAllTasks.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonAllTasksActionPerformed(evt);
+            }
+        });
+
+        ButtonPendingTasks.setText("Ver atrasadas");
+        ButtonPendingTasks.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonPendingTasksActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(37, 37, 37)
+                .addGap(43, 43, 43)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(LabelTitle)
                     .addGroup(layout.createSequentialGroup()
                         .addGap(6, 6, 6)
-                        .addComponent(ScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel1))
-                .addContainerGap(125, Short.MAX_VALUE))
+                        .addComponent(ScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ButtonAllTasks)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(ButtonTasksToday, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(ButtonPendingTasks, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(26, 26, 26)
-                .addComponent(jLabel1)
+                .addComponent(LabelTitle)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 282, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(ScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 282, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(ButtonTasksToday)
+                        .addGap(18, 18, 18)
+                        .addComponent(ButtonPendingTasks)
+                        .addGap(18, 18, 18)
+                        .addComponent(ButtonAllTasks)))
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void ButtonTasksTodayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonTasksTodayActionPerformed
+        if(this.mode != 0){
+            clearScrollPanel();
+            this.tasksToday();
+            changeTitle();
+        }
+    }//GEN-LAST:event_ButtonTasksTodayActionPerformed
+
+    private void ButtonPendingTasksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonPendingTasksActionPerformed
+        if(this.mode != -1){
+            clearScrollPanel();
+            this.tasksPending();
+            changeTitle();
+        }
+    }//GEN-LAST:event_ButtonPendingTasksActionPerformed
+
+    private void ButtonAllTasksActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonAllTasksActionPerformed
+        if(this.mode != 1){
+            clearScrollPanel();
+            this.AllTasks();
+            changeTitle();
+        }
+    }//GEN-LAST:event_ButtonAllTasksActionPerformed
+
+    private void clearScrollPanel(){
+        ScrollPanePanel.removeAll();
+        ScrollPanePanel.revalidate();
+        ScrollPanePanel.repaint();
+    }
+    
+    private void changeTitle(){
+        switch(this.mode){
+            case 0 -> LabelTitle.setText("Pendientes");
+            case 1 -> LabelTitle.setText("Todas las tareas");
+            case -1 -> LabelTitle.setText("Tareas con atraso");
+        }
+        LabelTitle.revalidate();
+        LabelTitle.repaint();
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -108,10 +189,34 @@ public class CalendarView extends javax.swing.JFrame {
         CalendarManager cm = new CalendarManager();
         HashMap<String, String> tasks = cm.getAllTasksToday();
         for(Entry<String,String> entry : tasks.entrySet()){
-            Task task = new Task(entry.getKey(), entry.getValue());
+            TaskToday task = new TaskToday(entry.getKey(), entry.getValue());
             ScrollPanePanel.add(task.getPanel());
             configurateScrollPanePanel(task, tasks.size());
         }
+        this.mode = 0;
+    }
+    private void tasksPending(){
+        CalendarManager cm = new CalendarManager();
+        HashMap<String, String> tasks = cm.getAllPendingTasks();
+        for(Entry<String,String> entry : tasks.entrySet()){
+            String date = cm.getDateOf(entry.getKey());
+            int backwardness = cm.calcBackwardnessOf(entry.getKey());
+            TaskPending task = new TaskPending(entry.getKey(), entry.getValue(), date, backwardness);
+            ScrollPanePanel.add(task.getPanel());
+            configurateScrollPanePanel(task, tasks.size());
+        }
+        this.mode = -1;
+    }
+    private void AllTasks(){
+        CalendarManager cm = new CalendarManager();
+        HashMap<String, String> tasks = cm.getAllTasks();
+        for(Entry<String,String> entry : tasks.entrySet()){
+            String date = cm.getDateOf(entry.getKey());
+            TaskAll task = new TaskAll(entry.getKey(), entry.getValue(), date);
+            ScrollPanePanel.add(task.getPanel());
+            configurateScrollPanePanel(task, tasks.size());
+        }
+        this.mode = 1;
     }
     
     private void configurateScrollPanePanel(Task task, int hashmapLength){
@@ -121,21 +226,210 @@ public class CalendarView extends javax.swing.JFrame {
         ScrollPanePanel.revalidate();
     }
     
-    private class Task{
-        private String taskIdCM;
-        private String taskName;
-        private JLabel LabelTaskName;
-        private JButton ButtonCompleteTask;
-        private JButton ButtonDeleteTask;
-        private JPanel taskPanel;
-        
+    private abstract class Task{
+        private final String taskIdCM;
+        private final String taskName;
+        private JPanel PanelTask;
         public Task(String taskIdCM, String taskName){
             this.taskIdCM = taskIdCM;
             this.taskName = taskName;
         }
+        public String getID(){
+            return new String(this.taskIdCM);
+        }
+        public String getName(){
+            return new String(this.taskName);
+        }
+        public int getPanelHeight(){
+            return this.PanelTask.size().height;
+        }
+        public JPanel getJPanelObj(){
+            return this.PanelTask;
+        }
+        public void setPanel(JPanel panel){
+            this.PanelTask = panel;
+        }
+    }
+    
+    private class TaskAll extends Task{
+        private final String date;
+        private JLabel LabelTaskName_All;
+        private JLabel LabelDateFinal_All;
+        private JLabel LabelDate_All;
+        private JButton ButtonDelete_All;
+        
+        public TaskAll(String taskIdCM, String taskName, String date) {
+            super(taskIdCM, taskName);
+            this.date = date;
+        }
+        public JPanel getPanel(){
+            JPanel PanelTaskAll = new JPanel();
+            LabelTaskName_All = new JLabel(this.getName());
+            LabelDateFinal_All = new JLabel("Fecha:");
+            LabelDate_All = new JLabel(this.date);
+            ButtonDelete_All = new JButton("Eliminar");
+            ButtonDelete_All.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    ButtonDeleteActionPerformed(evt);
+                }
+            });
+            javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(PanelTaskAll);
+            PanelTaskAll.setLayout(jPanel1Layout);
+            jPanel1Layout.setHorizontalGroup(
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addComponent(LabelTaskName_All, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addComponent(LabelDateFinal_All)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(LabelDate_All, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(ButtonDelete_All, javax.swing.GroupLayout.DEFAULT_SIZE, 124, Short.MAX_VALUE))
+                    .addContainerGap())
+            );
+            jPanel1Layout.setVerticalGroup(
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(LabelDateFinal_All)
+                                .addComponent(LabelDate_All))
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                            .addComponent(ButtonDelete_All)
+                            .addGap(0, 4, Short.MAX_VALUE))
+                        .addComponent(LabelTaskName_All, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addContainerGap())
+            );
+            this.setPanel(PanelTaskAll);
+            return PanelTaskAll;
+        }
+        private void ButtonDeleteActionPerformed(java.awt.event.ActionEvent evt) {                                             
+            // Remove panel
+            ScrollPanePanel.remove(this.getJPanelObj());
+            // Remove with CalendarManager
+            CalendarManager cm = new CalendarManager();
+            cm.deleteTask(this.getID());
+            ScrollPanePanel.revalidate();
+            ScrollPanePanel.repaint();
+        }
+    }
+    
+    private class TaskPending extends Task{
+        private final String date;
+        private final int backwardness;
+        private JLabel LabelTaskName_Pending;
+        private JLabel LabelDate_Pending;
+        private JLabel LabelBwFinal_Pending;
+        private JLabel LabelBackwardness_Pending;
+        private JButton ButtonDelete_Pending;
+        private JButton ButtonCompleted_Pending;
+        
+        public TaskPending(String taskIdCM, String taskName, String date, int backwardness) {
+            super(taskIdCM, taskName);
+            this.date = date;
+            this.backwardness = backwardness;
+        }
         
         public JPanel getPanel(){
-            this.LabelTaskName = new JLabel(this.taskName);
+            JPanel taskPendingPanel = new JPanel();
+            LabelTaskName_Pending = new JLabel(this.getName());
+            LabelDate_Pending = new JLabel(this.date);
+            LabelBwFinal_Pending = new JLabel("Retraso:");
+            LabelBackwardness_Pending = new JLabel(this.backwardness+" días de retraso");
+            ButtonDelete_Pending = new JButton("Eliminar");
+            ButtonDelete_Pending.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    ButtonDeleteActionPerformed(evt);
+                }
+            });
+            ButtonCompleted_Pending = new JButton("Completar");
+            ButtonCompleted_Pending.addActionListener(new java.awt.event.ActionListener() {
+                public void actionPerformed(java.awt.event.ActionEvent evt) {
+                    ButtonCompleteTaskActionPerformed(evt);
+                }
+            });
+
+            javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(taskPendingPanel);
+            taskPendingPanel.setLayout(jPanel1Layout);
+            jPanel1Layout.setHorizontalGroup(
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addComponent(taskPendingPanel)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(LabelBackwardness_Pending, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGap(31, 31, 31))
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addComponent(LabelTaskName_Pending, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(ButtonDelete_Pending, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(ButtonCompleted_Pending, javax.swing.GroupLayout.DEFAULT_SIZE, 98, Short.MAX_VALUE)
+                        .addComponent(LabelDate_Pending, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addContainerGap())
+            );
+            jPanel1Layout.setVerticalGroup(
+                jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel1Layout.createSequentialGroup()
+                    .addGap(6, 6, 6)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addComponent(LabelDate_Pending)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(ButtonCompleted_Pending))
+                        .addComponent(LabelTaskName_Pending, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(jPanel1Layout.createSequentialGroup()
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                .addComponent(taskPendingPanel)
+                                .addComponent(LabelBackwardness_Pending))
+                            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ButtonDelete_Pending)
+                            .addContainerGap())))
+            );
+            this.setPanel(taskPendingPanel);
+            return taskPendingPanel;
+        }
+        private void ButtonDeleteActionPerformed(java.awt.event.ActionEvent evt) {                                             
+            // Remove panel
+            ScrollPanePanel.remove(this.getJPanelObj());
+            // Remove with CalendarManager
+            CalendarManager cm = new CalendarManager();
+            cm.deleteTask(this.getID());
+            ScrollPanePanel.revalidate();
+            ScrollPanePanel.repaint();
+        }
+        private void ButtonCompleteTaskActionPerformed(java.awt.event.ActionEvent evt) {                                             
+            // Remove panel
+            ScrollPanePanel.remove(this.getJPanelObj());
+            // update with CalendarManager
+            CalendarManager cm = new CalendarManager();
+            cm.updateTask(this.getID());
+            ScrollPanePanel.revalidate();
+            ScrollPanePanel.repaint();
+        }
+    }
+    
+    private class TaskToday extends Task{
+        private JLabel LabelTaskName;
+        private JButton ButtonCompleteTask;
+        private JButton ButtonDeleteTask;
+
+        public TaskToday(String taskIdCM, String taskName) {
+            super(taskIdCM, taskName);
+        }
+        
+        public JPanel getPanel(){
+            this.LabelTaskName = new JLabel(this.getName());
             this.ButtonCompleteTask = new JButton("Completar");
             this.ButtonCompleteTask.addActionListener(new java.awt.event.ActionListener() {
                 public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -148,9 +442,9 @@ public class CalendarView extends javax.swing.JFrame {
                     ButtonDeleteActionPerformed(evt);
                 }
             });
-            this.taskPanel = new JPanel();
-            javax.swing.GroupLayout taskPanelLayout = new javax.swing.GroupLayout(this.taskPanel);
-            this.taskPanel.setLayout(taskPanelLayout);
+            JPanel taskPanel = new JPanel();
+            javax.swing.GroupLayout taskPanelLayout = new javax.swing.GroupLayout(taskPanel);
+            taskPanel.setLayout(taskPanelLayout);
             taskPanelLayout.setHorizontalGroup(
                 taskPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(taskPanelLayout.createSequentialGroup()
@@ -174,40 +468,35 @@ public class CalendarView extends javax.swing.JFrame {
                         .addComponent(LabelTaskName, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addContainerGap())
             );
-            return this.taskPanel;
+            this.setPanel(taskPanel);
+            return taskPanel;
         }
         private void ButtonDeleteActionPerformed(java.awt.event.ActionEvent evt) {                                             
             // Remove panel
-            ScrollPanePanel.remove(this.taskPanel);
+            ScrollPanePanel.remove(this.getJPanelObj());
             // Remove with CalendarManager
             CalendarManager cm = new CalendarManager();
-            cm.deleteTask(this.taskIdCM);
+            cm.deleteTask(this.getID());
             ScrollPanePanel.revalidate();
             ScrollPanePanel.repaint();
         }
         private void ButtonCompleteTaskActionPerformed(java.awt.event.ActionEvent evt) {                                             
             // Remove panel
-            ScrollPanePanel.remove(this.taskPanel);
+            ScrollPanePanel.remove(this.getJPanelObj());
             // update with CalendarManager
             CalendarManager cm = new CalendarManager();
-            cm.updateTask(this.taskIdCM);
+            cm.updateTask(this.getID());
             ScrollPanePanel.revalidate();
             ScrollPanePanel.repaint();
-        }
-        public int getPanelHeight(){
-            return this.taskPanel.size().height;
-        }
-        public String getID(){
-            return new String(this.taskIdCM);
-        }
-        public String getName(){
-            return new String(this.taskName);
         }
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButtonAllTasks;
+    private javax.swing.JButton ButtonPendingTasks;
+    private javax.swing.JButton ButtonTasksToday;
+    private javax.swing.JLabel LabelTitle;
     private javax.swing.JScrollPane ScrollPane;
     private javax.swing.JPanel ScrollPanePanel;
-    private javax.swing.JLabel jLabel1;
     // End of variables declaration//GEN-END:variables
 }
