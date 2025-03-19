@@ -16,11 +16,13 @@ public class TasksView extends javax.swing.JFrame {
     private ActiveRecallManager ARM;
     private final int MAX_STUDY_ITERATIONS = 1;
     private TasksList list;
+    private boolean running = true;
     /**
      * Creates new form TasksView
      */
     public TasksView() {
         initComponents();
+        this.setLocationRelativeTo(null);
         this.list = new TasksList();
         this.ARM = new ActiveRecallManager(this.MAX_STUDY_ITERATIONS);
         this.ARM.start();
@@ -41,6 +43,7 @@ public class TasksView extends javax.swing.JFrame {
         ScrollPanePanel = new javax.swing.JPanel();
         jButton1 = new javax.swing.JButton();
         InputTaskName = new javax.swing.JTextField();
+        ButtonBack = new javax.swing.JButton();
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -74,27 +77,37 @@ public class TasksView extends javax.swing.JFrame {
             }
         });
 
+        ButtonBack.setText("Atras");
+        ButtonBack.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonBackActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(148, 148, 148)
-                .addComponent(jButton1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(InputTaskName, javax.swing.GroupLayout.PREFERRED_SIZE, 379, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(100, Short.MAX_VALUE)
+                .addComponent(InputTaskName, javax.swing.GroupLayout.PREFERRED_SIZE, 430, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addComponent(ScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(ScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ButtonBack))
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(25, 25, 25)
+                .addComponent(ButtonBack)
+                .addGap(2, 2, 2)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1)
-                    .addComponent(InputTaskName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(InputTaskName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jButton1))
                 .addGap(18, 18, 18)
                 .addComponent(ScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 265, Short.MAX_VALUE)
                 .addContainerGap())
@@ -107,6 +120,15 @@ public class TasksView extends javax.swing.JFrame {
         this.list.createTask(InputTaskName.getText());
     }//GEN-LAST:event_jButton1ActionPerformed
 
+    private void ButtonBackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonBackActionPerformed
+        this.running = false;
+        synchronized(this.ARM){
+            this.ARM.notifyAll();
+        }
+        MainView mv = new MainView();
+        mv.setVisible(true);
+    }//GEN-LAST:event_ButtonBackActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -117,16 +139,23 @@ public class TasksView extends javax.swing.JFrame {
             public void run(){
                 ArrayList<Integer> taskReady;
                 try {
-                    while(true){
+                    while(running){
                         synchronized(ARM){
                             ARM.wait();
-                            taskReady = ARM.getTaksReadyToStudy();
-                            for(int id : taskReady){
-                                list.setReadyToStudy(id);
+                            if(running){
+                                taskReady = ARM.getTaksReadyToStudy();
+                                for(int id : taskReady){
+                                    list.setReadyToStudy(id);
+                                }
+                                ScrollPanePanel.revalidate();
                             }
-                            ScrollPanePanel.revalidate();
                         }
                     }
+                    synchronized(ARM.getLocker()){
+                        ARM.finish();
+                        ARM.getLocker().wait();
+                    }
+                    dispose();
                 } catch (InterruptedException ex) {
                     Logger.getLogger(TasksView.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -169,6 +198,7 @@ public class TasksView extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButtonBack;
     private javax.swing.JTextField InputTaskName;
     private javax.swing.JScrollPane ScrollPane;
     private javax.swing.JPanel ScrollPanePanel;
@@ -204,6 +234,7 @@ public class TasksView extends javax.swing.JFrame {
     private class Task{
         private final int taskId;
         private final int ICON_SIZE = 37;
+        private String taskName;
         private JPanel TaskPanel;
         private JLabel LabelTask;
         private JLabel iconStatusTask;
@@ -216,6 +247,7 @@ public class TasksView extends javax.swing.JFrame {
         
         public JPanel createTask(String taskName){
             // Create the task panel
+            this.taskName = taskName;
             this.TaskPanel = new JPanel();
             this.LabelTask = new JLabel(taskName);
             this.iconStatusTask = new JLabel("");
@@ -306,6 +338,8 @@ public class TasksView extends javax.swing.JFrame {
         
         private void ButtonRenewTimeActionPerformed(java.awt.event.ActionEvent evt) {                                             
             if(ARM.taskAlreadyStudied(this.taskId) == 1){
+                CalendarManager cm = new CalendarManager();
+                cm.putTask(this.taskName);
                 removeTask();
             }else{
                 setStudied();

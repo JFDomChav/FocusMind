@@ -9,9 +9,19 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     private StudyTasksList list = new StudyTasksList();
     private ArrayList<Integer> TasksReadyToStudy = new ArrayList<>();
     private final int MAX_ITERATIONS;
+    private boolean running = true;
+    private final Object lock = new Object();
     
     public ActiveRecallManager(int max_iterations){
         this.MAX_ITERATIONS = max_iterations;
+    }
+    
+    public Object getLocker(){
+        return this.lock;
+    }
+    
+    public void finish(){
+        this.running = false;
     }
     
     private int getMaxIterations(){
@@ -60,7 +70,7 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     
     @Override
     public void run(){
-        while(true){
+        while(running){
             if(list.check(TasksReadyToStudy)){
                 synchronized(this){
                     this.notifyAll();
@@ -71,6 +81,9 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
             } catch (InterruptedException ex) {
                 Logger.getLogger(ActiveRecallManager.class.getName()).log(Level.SEVERE, null, ex);
             }
+        }
+        synchronized(this.lock){
+            this.lock.notifyAll();
         }
     }
     
