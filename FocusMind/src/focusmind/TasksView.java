@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -144,7 +145,12 @@ public class TasksView extends javax.swing.JFrame {
                             ARM.wait();
                             if(running){
                                 taskReady = ARM.getTaksReadyToStudy();
+                                list.showTaskFunction();
                                 for(int id : taskReady){
+                                    System.out.println("El id es: "+id);
+                                    if(list == null){
+                                        System.out.println("Lista es nula");
+                                    }
                                     list.setReadyToStudy(id);
                                 }
                                 ScrollPanePanel.revalidate();
@@ -223,11 +229,16 @@ public class TasksView extends javax.swing.JFrame {
             }
             ScrollPanePanel.revalidate();
         }
+        public void showTaskFunction(){
+            for(Map.Entry<Integer, Task> set : TasksFunction.entrySet()){
+                System.out.println("ID="+set.getKey()+", VAL="+set.getValue().getId());
+            }
+        }
         public void setReadyToStudy(int id){
            this.TasksFunction.get(id).setReadyToStudy();
         }
-        public void deleteTask(int id){
-            this.TasksFunction.remove(id);
+        public void deleteTask(int id,  Task task){
+            this.TasksFunction.remove(id, task);
         }
     }
     
@@ -243,6 +254,10 @@ public class TasksView extends javax.swing.JFrame {
         
         public Task(int id){
             this.taskId = id;
+        }
+        
+        public int getId(){
+            return this.taskId;
         }
         
         public JPanel createTask(String taskName){
@@ -325,7 +340,7 @@ public class TasksView extends javax.swing.JFrame {
         }
         
         private void removeTask(){
-            list.deleteTask(this.taskId);
+            list.deleteTask(this.taskId, this);
             ARM.removeTask(this.taskId);
             ScrollPanePanel.remove(this.TaskPanel);
             ScrollPanePanel.revalidate();

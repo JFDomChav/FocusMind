@@ -46,7 +46,7 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     
     public int addTask(){
         int ret = this.list.add();
-
+        System.out.println("Se agrego ID="+ret);
         return ret;
     }
     /* return status code:
@@ -66,6 +66,7 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     
     public void removeTask(int id){
         this.list.remove(id);
+        System.out.println("Se quito ID="+id);
     }
     
     @Override
@@ -89,18 +90,35 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     
     // List to save the study tasks
     private class StudyTasksList{
-        private int ActualFreeId = 0;
+        private ArrayList<Integer> ids = new ArrayList<>();
         private StudyTasksNode firstNode = null;
         
         // Return the ID
         public int add(){
+            int id = this.ActualFreeId();
             if(this.firstNode == null){
-                this.firstNode = new StudyTasksNode(this.ActualFreeId, ActiveRecallManager.calcTime(0));
+                this.firstNode = new StudyTasksNode(id, ActiveRecallManager.calcTime(0));
             }else{
-                this.firstNode.add(new StudyTasksNode(this.ActualFreeId, ActiveRecallManager.calcTime(0)));
+                this.firstNode.add(new StudyTasksNode(id, ActiveRecallManager.calcTime(0)));
             }
-            this.ActualFreeId++;
-            return (this.ActualFreeId-1);
+            this.ids.add(id);
+            return id;
+        }
+        
+        private int ActualFreeId(){
+            if(this.ids == null || this.ids.isEmpty()){
+                return 0;
+            }
+            int max_id = 1023;
+            int id = 0;
+            while(id <= max_id){
+                if(!this.ids.contains(id)){
+                    return id;
+                }else{
+                    id++;
+                }
+            }
+            return -1;
         }
         
         public void remove(int taskId){
@@ -111,6 +129,7 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
                     this.firstNode.removeTaskById(taskId);
                 }
             }
+            this.ids.remove(taskId);
         }
         
         public boolean check(ArrayList<Integer> list){
