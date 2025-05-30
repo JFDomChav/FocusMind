@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -15,13 +14,14 @@ import javax.swing.JScrollPane;
 
 public class TasksView extends javax.swing.JFrame {
     private ActiveRecallManager ARM;
-    private final int MAX_STUDY_ITERATIONS = 1;
     private TasksList list;
     private boolean running = true;
+    private int MAX_STUDY_ITERATIONS;
     /**
      * Creates new form TasksView
      */
     public TasksView() {
+        this.MAX_STUDY_ITERATIONS = Options.getInstance().getMAX_STUDY_ITERATIONS();
         initComponents();
         this.setLocationRelativeTo(null);
         this.list = new TasksList();
@@ -145,11 +145,8 @@ public class TasksView extends javax.swing.JFrame {
                             ARM.wait();
                             if(running){
                                 taskReady = ARM.getTaksReadyToStudy();
-                                list.showTaskFunction();
                                 for(int id : taskReady){
-                                    System.out.println("El id es: "+id);
                                     if(list == null){
-                                        System.out.println("Lista es nula");
                                     }
                                     list.setReadyToStudy(id);
                                 }
@@ -228,11 +225,6 @@ public class TasksView extends javax.swing.JFrame {
                 ScrollPanePanel.setPreferredSize( new Dimension(ScrollPanePanel.getSize().width, (panelHeight*(this.TasksFunction.size()+1))));
             }
             ScrollPanePanel.revalidate();
-        }
-        public void showTaskFunction(){
-            for(Map.Entry<Integer, Task> set : TasksFunction.entrySet()){
-                System.out.println("ID="+set.getKey()+", VAL="+set.getValue().getId());
-            }
         }
         public void setReadyToStudy(int id){
            this.TasksFunction.get(id).setReadyToStudy();
@@ -355,11 +347,13 @@ public class TasksView extends javax.swing.JFrame {
             if(ARM.taskAlreadyStudied(this.taskId) == 1){
                 CalendarManager cm = new CalendarManager();
                 cm.putTask(this.taskName);
-                removeTask();
             }else{
                 setStudied();
                 ScrollPanePanel.revalidate();
             }
+            ScrollPanePanel.remove(this.TaskPanel);
+            ScrollPanePanel.revalidate();
+            ScrollPanePanel.repaint();
         }
     }
 }

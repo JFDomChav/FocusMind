@@ -46,7 +46,6 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     
     public int addTask(){
         int ret = this.list.add();
-        System.out.println("Se agrego ID="+ret);
         return ret;
     }
     /* return status code:
@@ -56,7 +55,7 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
         -2= the task was not found 
     */
     public int taskAlreadyStudied(int taskId){
-        this.TasksReadyToStudy.remove(taskId);
+        this.TasksReadyToStudy.remove(this.TasksReadyToStudy.indexOf(taskId));
         int ret = this.list.taskRenewCooldownTimeOf(taskId);
         if(ret == 1){
             this.list.remove(taskId);
@@ -66,7 +65,6 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
     
     public void removeTask(int id){
         this.list.remove(id);
-        System.out.println("Se quito ID="+id);
     }
     
     @Override
@@ -129,7 +127,7 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
                     this.firstNode.removeTaskById(taskId);
                 }
             }
-            this.ids.remove(taskId);
+            this.ids.remove(this.ids.indexOf(taskId));
         }
         
         public boolean check(ArrayList<Integer> list){
@@ -207,8 +205,8 @@ public class ActiveRecallManager extends Thread{ // TESTED ☑
         public int renewCooldownTimeOf(int taskId){
             if(this.idTask == taskId){
                 this.timeFinish = false;
-                if(this.actualIteration < getMaxIterations()){
-                    this.actualIteration++;
+                this.actualIteration++;
+                if(this.actualIteration <= getMaxIterations()){
                     this.finishTimeTask = ActiveRecallManager.calcTime(this.actualIteration);
                     return 0;
                 }

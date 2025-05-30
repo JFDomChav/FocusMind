@@ -29,3 +29,5 @@ replay_pid*
 
 /FocusMind/build/
 /FocusMind/FocusMind/resources/
+/FocusMind/dist/
+/pruebaRI/target/

@@ -11,13 +11,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.Random;
 
 public class CalendarManager {
-    private final String CALENDAR_FILE_NAME = "calendar.txt";
     private final File calendarFile;
-    private final int MAX_ITERATIONS = 7;
-    private final int NULL_ITERATION = 9;
+    private String CALENDAR_FILE_NAME;
+    private int MAX_ITERATIONS;
+    private int NULL_ITERATION;
     public CalendarManager(){
+        this.NULL_ITERATION = Options.getInstance().getNULL_ITERATION();
+        this.MAX_ITERATIONS = Options.getInstance().getMAX_ITERATIONS();
+        this.CALENDAR_FILE_NAME = Options.getInstance().getCALENDAR_FILE_NAME();
         String actualRoute = System.getProperty("user.dir");
         this.calendarFile = new File(actualRoute+"/"+CALENDAR_FILE_NAME);
         accessToFile();
@@ -210,7 +214,13 @@ public class CalendarManager {
     }
     
     private String createID(String nameTask){ // Tested ☑
-        String id = nameTask.substring(0, 2)+dateToString(LocalDate.now(), true);
+        // 10 len
+        String date = LocalDate.now().toString();
+        Random random = new Random();
+        int num = (int) (random.nextDouble()*(127));
+        nameTask += date+ Integer.toString(num);
+        System.out.println(nameTask);
+        String id = Encoder.encode(nameTask,10);
         return id;
     }
     
