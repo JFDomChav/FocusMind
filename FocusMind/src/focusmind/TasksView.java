@@ -8,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -28,6 +29,7 @@ public class TasksView extends javax.swing.JFrame {
         this.ARM = new ActiveRecallManager(this.MAX_STUDY_ITERATIONS);
         this.ARM.start();
         waitARM().start();
+        Task.setJFrame(this);
     }
 
     /**
@@ -235,6 +237,7 @@ public class TasksView extends javax.swing.JFrame {
     }
     
     private class Task{
+        private static JFrame frame;
         private final int taskId;
         private final int ICON_SIZE = 37;
         private String taskName;
@@ -250,6 +253,10 @@ public class TasksView extends javax.swing.JFrame {
         
         public int getId(){
             return this.taskId;
+        }
+        
+        public static void setJFrame(JFrame frame_father){
+            frame = frame_father;
         }
         
         public JPanel createTask(String taskName){
@@ -346,12 +353,12 @@ public class TasksView extends javax.swing.JFrame {
         private void ButtonRenewTimeActionPerformed(java.awt.event.ActionEvent evt) {                                             
             if(ARM.taskAlreadyStudied(this.taskId) == 1){
                 CalendarManager cm = new CalendarManager();
-                cm.putTask(this.taskName);
+                cm.putTask(this.taskName, frame);
+                ScrollPanePanel.remove(this.TaskPanel);
             }else{
                 setStudied();
                 ScrollPanePanel.revalidate();
             }
-            ScrollPanePanel.remove(this.TaskPanel);
             ScrollPanePanel.revalidate();
             ScrollPanePanel.repaint();
         }
