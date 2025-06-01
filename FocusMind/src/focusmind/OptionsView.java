@@ -1,16 +1,20 @@
 package focusmind;
 
+import java.io.File;
 import javax.swing.JOptionPane;
 
 public class OptionsView extends javax.swing.JFrame {
-
+    private boolean ignore_duplicates;
     public OptionsView() {
         initComponents();
+        this.setLocationRelativeTo(null);
         String filename = Options.getInstance().getCALENDAR_FILE_NAME();
         filename = filename.split("\\.")[0];
         this.InputCalendarFileName.setText(filename);
         this.InputMaxIterations.setText(Integer.toString(Options.getInstance().getMAX_ITERATIONS()));
         this.InputMaxStudyIterations.setText(Integer.toString(Options.getInstance().getMAX_STUDY_ITERATIONS()));
+        this.ignore_duplicates = Options.getInstance().getIGNORE_DUPLICATED_NAMES();
+        this.toggleButtonIDN();
     }
 
     /**
@@ -30,6 +34,9 @@ public class OptionsView extends javax.swing.JFrame {
         InputMaxIterations = new javax.swing.JTextField();
         ButtonSave = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
+        ButtonClose = new javax.swing.JButton();
+        jLabel5 = new javax.swing.JLabel();
+        TButtonIgnoreDuplicated = new javax.swing.JToggleButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -55,39 +62,60 @@ public class OptionsView extends javax.swing.JFrame {
         jLabel4.setFont(new java.awt.Font("Corbel", 1, 24)); // NOI18N
         jLabel4.setText("CONFIGURACIONES");
 
+        ButtonClose.setText("<");
+        ButtonClose.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonCloseActionPerformed(evt);
+            }
+        });
+
+        jLabel5.setText("Ignorar duplicados (nombre automatico):");
+
+        TButtonIgnoreDuplicated.setText("No");
+        TButtonIgnoreDuplicated.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                TButtonIgnoreDuplicatedActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addComponent(ButtonClose, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE)
+                .addComponent(jLabel4)
+                .addGap(88, 88, 88))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jLabel2)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(InputCalendarFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
-                            .addComponent(InputMaxStudyIterations)
-                            .addComponent(InputMaxIterations)))
+                            .addComponent(jLabel3)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(135, 135, 135)
+                        .addComponent(ButtonSave, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jLabel4)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(jLabel5)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(InputCalendarFileName, javax.swing.GroupLayout.DEFAULT_SIZE, 149, Short.MAX_VALUE)
+                    .addComponent(InputMaxStudyIterations)
+                    .addComponent(InputMaxIterations)
+                    .addComponent(TButtonIgnoreDuplicated, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
-            .addGroup(layout.createSequentialGroup()
-                .addGap(134, 134, 134)
-                .addComponent(ButtonSave, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel4)
+                    .addComponent(ButtonClose, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(InputCalendarFileName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -99,9 +127,13 @@ public class OptionsView extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(InputMaxIterations, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel5)
+                    .addComponent(TButtonIgnoreDuplicated))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
                 .addComponent(ButtonSave, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addGap(18, 18, 18))
         );
 
         pack();
@@ -149,20 +181,56 @@ public class OptionsView extends javax.swing.JFrame {
             Options op = Options.getInstance();
             calendarFileName = calendarFileName.split("\\.")[0];
             calendarFileName = calendarFileName+".txt";
+            String old_file_name = op.getCALENDAR_FILE_NAME();
             op.setCALENDAR_FILE_NAME(calendarFileName);
+            ConfigFileManager.getInstance().set(Options.calendar_file_name_var_name, calendarFileName);
             op.setMAX_ITERATIONS(maxIterations);
+            ConfigFileManager.getInstance().set(Options.max_iterations_var_name, Integer.toString(maxIterations));
             op.setMAX_STUDY_ITERATIONS(maxStudyIterations);
+            ConfigFileManager.getInstance().set(Options.max_study_iterations_var_name, Integer.toString(maxStudyIterations));
             int null_iteration = maxIterations+1;
             op.setNULL_ITERATION(null_iteration);
+            ConfigFileManager.getInstance().set(Options.null_iterator_var_name, Integer.toString(null_iteration));
+            ConfigFileManager.getInstance().set(Options.ignore_duplicated_names_var_name, ignore_duplicates ? "1":"0");
+            
+            CalendarManager cm = new CalendarManager();
+            
+            String actualRoute = System.getProperty("user.dir");
+            File old_file = new File(actualRoute+"/"+old_file_name);
+            if(old_file.exists() && old_file.canRead()){
+                cm.importFile(old_file, this);
+            }
+            if(!old_file.delete()){
+                System.out.println("FocusMind can't delete the old calendar file");
+            }
+            
             MainView mv = new MainView();
             mv.setVisible(true);
             this.setVisible(false);
             this.dispose();
         }else{
-            JOptionPane.showMessageDialog(null, "Usted tiene errores en los campos:"+errorIn, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showInputDialog(null, "Usted tiene errores en los campos:"+errorIn, "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_ButtonSaveActionPerformed
 
+    private void ButtonCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonCloseActionPerformed
+        MainView mv = new MainView();
+        mv.setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_ButtonCloseActionPerformed
+
+    private void TButtonIgnoreDuplicatedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TButtonIgnoreDuplicatedActionPerformed
+        toggleButtonIDN();
+    }//GEN-LAST:event_TButtonIgnoreDuplicatedActionPerformed
+    
+    private void toggleButtonIDN(){
+        ignore_duplicates = !ignore_duplicates;
+        if(ignore_duplicates){
+            this.TButtonIgnoreDuplicated.setText("Si");
+        }else{
+            this.TButtonIgnoreDuplicated.setText("No");
+        }
+    }
     /**
      * @param args the command line arguments
      */
@@ -199,13 +267,16 @@ public class OptionsView extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButtonClose;
     private javax.swing.JButton ButtonSave;
     private javax.swing.JTextField InputCalendarFileName;
     private javax.swing.JTextField InputMaxIterations;
     private javax.swing.JTextField InputMaxStudyIterations;
+    private javax.swing.JToggleButton TButtonIgnoreDuplicated;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
+    private javax.swing.JLabel jLabel5;
     // End of variables declaration//GEN-END:variables
 }
